@@ -12,29 +12,30 @@
 
 TARGET := Famine
 
-
 AS := nasm
-ASFLAGS ?= -felf64 -I include/
-LDFLAGS ?=
+ASFLAGS ?= -felf64
+CFLAGS ?= -c -Wall -Wextra -I include/ -nostdlib -fPIC -nodefaultlibs -Wno-stack-protector -fno-builtin
+LDFLAGS ?= -nostdlib -fPIC
 
-SOURCES := src/famine.asm
-HEADERS := include/famine.inc
-OBJECTS := $(SOURCES:.asm=.o)
-
-ifdef DEBUG
-	ASFLAGS += -g -Fdwarf
-endif
+C_SOURCES := $(shell find src/ -type f -name '*.c')
+ASM_SOURCES := $(shell find src/ -type f -name '*.asm')
+# payload.o and end.o MUST be linked respectively first and last
+ALL_OBJECTS := src/asm/payload.o $(C_SOURCES:.c=.o) $(ASM_SOURCES:.asm=.o) src/asm/end.o
+HEADERS := include/famine.h
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS) $(HEADERS)
-	$(LD) $(LDFLAGS) $(OBJECTS) -o $@
+$(TARGET): $(ALL_OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $^
 
 %.o: %.asm
 	$(AS) $(ASFLAGS) $< -o $@
 
+%.o: %.c
+	$(CC) $(CFLAGS) $< -o $@
+
 clean:
-	@rm -vf $(OBJECTS)
+	@rm -vf $(ALL_OBJECTS)
 
 fclean: clean
 	@rm -vf $(TARGET)

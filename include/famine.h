@@ -13,8 +13,8 @@
 #define PAYLOAD_SIZE ((int)(end - _start))
 #define SIGNATURE_SIZE 32
 #define SIGNATURE_OFFSET ((int)(signature - (char*)_start))
-#define PAYLOAD_ENTRY_OFFSET ((int)(SIGNATURE_OFFSET + SIGNATURE_SIZE))
-#define HOST_ENTRY_OFFSET ((int)(PAYLOAD_ENTRY_OFFSET + 8))
+#define PAYLOAD_OFFSET ((int)(SIGNATURE_OFFSET + SIGNATURE_SIZE))
+#define HOST_OFFSET ((int)(PAYLOAD_OFFSET + 8))
 
 // ASM variables
 extern void _start(void); // NOLINT(bugprone-reserved-identifier)
@@ -36,6 +36,6 @@ struct __attribute__ ((packed)) linux_dirent64 {
 	char d_name[]; /* Filename (null-terminated) */
 };
 
-bool DaemonProcessRunning(const char *procDirectory);
+bool isDaemonProcessRunning(const char *procDirectory);
 bool isValidElf64(const Elf64_Ehdr *ehdr);
 Elf64_Phdr *findUsableSegment(Elf64_Phdr *phdr, Elf64_Half e_phnum);

